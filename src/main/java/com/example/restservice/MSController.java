@@ -33,7 +33,7 @@ public class MSController {
 	public ResObj msGet() {
 		
 		// faccio la richiesta
-//		String requestedURL = "http://%s:%d%s".formatted(new Object[] { 231231, 31321, "/" });
+//		String requestedURL = "http://%s:%d%s".formatted(new Object[] { "tier2", 80, "/" });
 //		HttpResponse<JsonNode> resp = Unirest.get(URI.create(requestedURL).toString()).asJson();
 		
 		this.doWork();
