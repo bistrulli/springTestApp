@@ -1,0 +1,10 @@
+{
+  "connectionString": "InstrumentationKey=be4039ec-5553-41cf-9979-cfe2f504a50e;IngestionEndpoint=https://italynorth-0.in.applicationinsights.azure.com/;LiveEndpoint=https://italynorth.livediagnostics.monitor.azure.com/",
+  "role": {
+    "name": "test app"
+  },
+ "sampling": {
+    "percentage": 100
+  },
+  "metricIntervalSeconds": 60
+}
