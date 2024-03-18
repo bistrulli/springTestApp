@@ -8,4 +8,4 @@ RUN git clone https://github.com/bistrulli/springTestApp.git
 WORKDIR /root/springTestApp
 RUN mvn clean package
 EXPOSE 80
-CMD ["java", "-jar", "/target/k8testpod-0.0.1.jar","--ms.stime=0.1"] 
+CMD ["java", "-jar", "/root/springTestApp/target/k8testpod-0.0.1.jar","--ms.stime=0.1"] 
