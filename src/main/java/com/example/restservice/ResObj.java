@@ -2,22 +2,22 @@ package com.example.restservice;
 
 public class ResObj {
 
-	private long id=-1;
-	private String content="";
+    private long id = -1;
+    private String content = "";
 
-	public ResObj(long id, String content) {
-		this.id = id;
-		this.content = content;
-	}
-	
-	public ResObj() {
-	}
+    public ResObj(long id, String content) {
+        this.id = id;
+        this.content = content;
+    }
 
-	public long getId() {
-		return id;
-	}
+    public ResObj() {
+    }
 
-	public String getContent() {
-		return content;
-	}
+    public long getId() {
+        return id;
+    }
+
+    public String getContent() {
+        return content;
+    }
 }
