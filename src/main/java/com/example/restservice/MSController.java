@@ -39,8 +39,8 @@ public class MSController {
         logger.info("New request arrived.");
 
         // faccio la richiesta
-		//String requestedURL = "http://%s:%d%s".formatted(new Object[] { "spring-test-app-tier2", 80, "/" });
-        String requestedURL = "http://spring-test-app-tier2:80";
+		String requestedURL = "http://%s:%d%s".formatted(new Object[] { "spring-test-app-tier2", 80, "/" });
+        //String requestedURL = "http://localhost:80";
 		HttpResponse<JsonNode> resp = Unirest.get(URI.create(requestedURL).toString()).asJson();
 
 

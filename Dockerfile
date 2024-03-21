@@ -4,7 +4,7 @@ RUN apt-get update -y
 RUN apt-get install openssh-server git openjdk-17-jdk maven redis curl iputils-ping -y
 
 WORKDIR /root
-RUN git clone https://github.com/bistrulli/springTestApp.git
+RUN git clone --branch 1tier https://github.com/bistrulli/springTestApp.git
 WORKDIR /root/springTestApp
 RUN mvn clean package
 EXPOSE 80
