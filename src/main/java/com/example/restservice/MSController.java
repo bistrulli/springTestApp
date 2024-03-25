@@ -3,15 +3,16 @@ package com.example.restservice;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.net.URI;
+import java.util.*;
 
 import com.google.api.Metric;
 import com.google.api.MonitoredResource;
 import com.google.cloud.monitoring.v3.MetricServiceClient;
 import com.google.protobuf.util.Timestamps;
+import kong.unirest.HttpResponse;
+import kong.unirest.JsonNode;
+import kong.unirest.Unirest;
 import org.apache.commons.math3.distribution.ExponentialDistribution;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,6 +55,11 @@ public class MSController {
     public ResObj msGet() throws IOException {
         logger.info("New request arrived. (Total: {})", requestCount.addAndGet(1));
         long timeLapse = System.currentTimeMillis() - initialTime;
+
+        if (Project.getServiceName().equals("tier1")) {
+            String requestedURL = "http://spring-test-app-tier2:80/";
+            HttpResponse<JsonNode> resp = Unirest.get(URI.create(requestedURL).toString()).asJson();
+        }
 
         long startTime = System.nanoTime();
         this.doWork();
