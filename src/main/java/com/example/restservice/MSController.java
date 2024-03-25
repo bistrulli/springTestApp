@@ -51,11 +51,8 @@ import static java.lang.Boolean.*;
 
 @RestController
 public class MSController {
-
-    private static final AtomicBoolean firstRequest = new AtomicBoolean(TRUE);
     private static final AtomicInteger requestCount = new AtomicInteger(0);
     private static long initialTime = System.currentTimeMillis();
-
 
     private static final Logger logger = LoggerFactory.getLogger(RestServiceApplication.class);
 
@@ -71,26 +68,18 @@ public class MSController {
     @RequestMapping(value = "/", method = RequestMethod.GET)
     @ResponseBody
     public ResObj msGet() throws IOException {
-        String projectId = "my-microservice-test-project";
         requestCount.addAndGet(1);
+        logger.info("New request arrived. (Total: {})", requestCount);
+        long timeLapse = System.currentTimeMillis() - initialTime;
+        if (timeLapse > 5000) { // More than 5 seconds passed since the counter was reset
+            // Calculate rps
+            double rps = (double) requestCount.get() * 1000 / timeLapse;
+            logger.info("rps = {}", rps);
+            writeCustomMetric("my-microservice-test-project", "rps_gauge", rps);
 
-        if (firstRequest.get()) {
-            logger.info("First request arrived. (Total: " + requestCount + ")");
-            firstRequest.set(FALSE);
+            // Reset values
             initialTime = System.currentTimeMillis();
-        } else {
-            logger.info("New request arrived. (Total: " + requestCount + ")");
-            long timeLapse = System.currentTimeMillis() - initialTime;
-            if (timeLapse > 5000) { // More than 5 seconds passed since the counter was reset
-                // Calculate rps
-                double rps = (double) requestCount.get() * 1000 / timeLapse;
-                logger.info("RPS = " + rps);
-                writeCustomMetric(projectId, "rps_gauge", rps);
-
-                // Reset values
-                initialTime = System.currentTimeMillis();
-                requestCount.set(0);
-            }
+            requestCount.set(0);
         }
 
         this.doWork();
@@ -127,11 +116,10 @@ public class MSController {
         ProjectName name = ProjectName.of(projectId);
 
         // Prepares the metric descriptor
-//                Map<String, String> metricLabels = new HashMap<>();
-//                metricLabels.put("store_id", "Pittsburg");
-        Metric metric = Metric.newBuilder().setType("custom.googleapis.com/" + metricName)
-//                                .putAllLabels(metricLabels)
-                .build();
+        Map<String, String> metricLabels = new HashMap<>();
+        metricLabels.put("service", "tier2");
+        Metric metric = Metric.newBuilder().setType("custom.googleapis.com/" + metricName).
+                putAllLabels(metricLabels).build();
 
 
         // Prepares the monitored resource descriptor
