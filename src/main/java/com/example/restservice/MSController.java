@@ -39,18 +39,21 @@ import com.google.monitoring.v3.TimeInterval;
 import com.google.monitoring.v3.TimeSeries;
 import com.google.monitoring.v3.TypedValue;
 import com.google.protobuf.util.Timestamps;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.lang.Boolean.*;
 
 @RestController
 public class MSController {
 
-    private static Boolean firstRequest = TRUE;
-    private static int requestCount = 0;
+    private static final AtomicBoolean firstRequest = new AtomicBoolean(TRUE);
+    private static final AtomicInteger requestCount = new AtomicInteger(0);
     private static long initialTime = System.currentTimeMillis();
 
 
@@ -69,86 +72,26 @@ public class MSController {
     @ResponseBody
     public ResObj msGet() throws IOException {
         String projectId = "my-microservice-test-project";
-        requestCount += 1;
+        requestCount.addAndGet(1);
 
-        if(firstRequest) {
+        if (firstRequest.get()) {
             logger.info("First request arrived. (Total: " + requestCount + ")");
-            firstRequest = FALSE;
+            firstRequest.set(FALSE);
             initialTime = System.currentTimeMillis();
-        }else {
+        } else {
             logger.info("New request arrived. (Total: " + requestCount + ")");
             long timeLapse = System.currentTimeMillis() - initialTime;
-            if (timeLapse > 5000) {
+            if (timeLapse > 5000) { // More than 5 seconds passed since the counter was reset
                 // Calculate rps
-                double rps = (double) requestCount * 1000 / timeLapse;
-                System.out.println("RPS = " + rps);
-
-                // Instantiates a client
-                MetricServiceClient metricServiceClient = MetricServiceClient.create();
-
-                // Prepares an individual data point
-                TimeInterval interval =
-                        TimeInterval.newBuilder()
-                                .setEndTime(Timestamps.fromMillis(System.currentTimeMillis()))
-                                .build();
-                TypedValue value = TypedValue.newBuilder().setDoubleValue(rps).build();
-                Point point = Point.newBuilder().setInterval(interval).setValue(value).build();
-
-                List<Point> pointList = new ArrayList<>();
-                pointList.add(point);
-
-                ProjectName name = ProjectName.of(projectId);
-
-                // Prepares the metric descriptor
-//                Map<String, String> metricLabels = new HashMap<>();
-//                metricLabels.put("store_id", "Pittsburg");
-                Metric metric =
-                        Metric.newBuilder()
-                                .setType("custom.googleapis.com/rps_gauge")
-//                                .putAllLabels(metricLabels)
-                                .build();
-
-
-                // Prepares the monitored resource descriptor
-                Map<String, String> resourceLabels = new HashMap<>();
-                resourceLabels.put("project_id", projectId);
-//                resourceLabels.put("instance_id", "gke-cluster-1-default-pool-932ec523-hn2h");
-//                resourceLabels.put("zone", "northamerica-northeast1-a");
-                MonitoredResource resource =
-                        MonitoredResource.newBuilder().setType("global").putAllLabels(resourceLabels).build();
-
-                // Prepares the time series request
-                TimeSeries timeSeries =
-                        TimeSeries.newBuilder()
-                                .setMetric(metric)
-                                .setResource(resource)
-                                .addAllPoints(pointList)
-                                .build();
-                List<TimeSeries> timeSeriesList = new ArrayList<>();
-                timeSeriesList.add(timeSeries);
-
-                CreateTimeSeriesRequest request =
-                        CreateTimeSeriesRequest.newBuilder()
-                                .setName(name.toString())
-                                .addAllTimeSeries(timeSeriesList)
-                                .build();
-
-                // Writes time series data
-                metricServiceClient.createTimeSeries(request);
-
-                logger.info("Done writing time series data.");
-
-                metricServiceClient.close();
-
+                double rps = (double) requestCount.get() * 1000 / timeLapse;
+                logger.info("RPS = " + rps);
+                writeCustomMetric(projectId, "rps_gauge", rps);
 
                 // Reset values
                 initialTime = System.currentTimeMillis();
-                requestCount = 0;
+                requestCount.set(0);
             }
-
         }
-
-
 
         this.doWork();
         return new ResObj();
@@ -160,15 +103,58 @@ public class MSController {
     }
 
     private void doWork() {
-        if (this.dist == null)
-            this.dist = new ExponentialDistribution(this.stime);
-        if (this.mgm == null)
-            this.mgm = ManagementFactory.getThreadMXBean();
+        if (this.dist == null) this.dist = new ExponentialDistribution(this.stime);
+        if (this.mgm == null) this.mgm = ManagementFactory.getThreadMXBean();
 
         long delay = Long.valueOf(Math.round(this.dist.sample() * 1e09));
         long start = this.mgm.getCurrentThreadCpuTime();
         while ((this.mgm.getCurrentThreadCpuTime() - start) < delay) {
         }
+    }
+
+    private void writeCustomMetric(String projectId, String metricName, double metricValue) throws IOException {
+        // Instantiates a client
+        MetricServiceClient metricServiceClient = MetricServiceClient.create();
+
+        // Prepares an individual data point
+        TimeInterval interval = TimeInterval.newBuilder().setEndTime(Timestamps.fromMillis(System.currentTimeMillis())).build();
+        TypedValue value = TypedValue.newBuilder().setDoubleValue(metricValue).build();
+        Point point = Point.newBuilder().setInterval(interval).setValue(value).build();
+
+        List<Point> pointList = new ArrayList<>();
+        pointList.add(point);
+
+        ProjectName name = ProjectName.of(projectId);
+
+        // Prepares the metric descriptor
+//                Map<String, String> metricLabels = new HashMap<>();
+//                metricLabels.put("store_id", "Pittsburg");
+        Metric metric = Metric.newBuilder().setType("custom.googleapis.com/" + metricName)
+//                                .putAllLabels(metricLabels)
+                .build();
+
+
+        // Prepares the monitored resource descriptor
+        Map<String, String> resourceLabels = new HashMap<>();
+        resourceLabels.put("project_id", projectId);
+//                resourceLabels.put("instance_id", "gke-cluster-1-default-pool-932ec523-hn2h");
+//                resourceLabels.put("zone", "northamerica-northeast1-a");
+        MonitoredResource resource = MonitoredResource.newBuilder().setType("global").putAllLabels(resourceLabels).build();
+
+        // Prepares the time series request
+        TimeSeries timeSeries = TimeSeries.newBuilder().setMetric(metric).setResource(resource).addAllPoints(pointList).build();
+        List<TimeSeries> timeSeriesList = new ArrayList<>();
+        timeSeriesList.add(timeSeries);
+
+        CreateTimeSeriesRequest request = CreateTimeSeriesRequest.newBuilder().setName(name.toString()).addAllTimeSeries(timeSeriesList).build();
+
+        // Writes time series data
+        metricServiceClient.createTimeSeries(request);
+
+        logger.info("Done writing time series data.");
+
+        metricServiceClient.close();
+
     }
 
 }
