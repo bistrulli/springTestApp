@@ -3,7 +3,6 @@ package com.example.restservice;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
-//import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -12,7 +11,6 @@ import java.util.Map;
 import com.google.api.Metric;
 import com.google.api.MonitoredResource;
 import com.google.cloud.monitoring.v3.MetricServiceClient;
-import com.google.monitoring.v3.*;
 import com.google.protobuf.util.Timestamps;
 import org.apache.commons.math3.distribution.ExponentialDistribution;
 import org.slf4j.Logger;
@@ -24,37 +22,23 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-//import kong.unirest.HttpResponse;
-//import kong.unirest.JsonNode;
-//import kong.unirest.Unirest;
-
 // Imports for the custom metrics
-import com.google.api.Metric;
-import com.google.api.MonitoredResource;
-import com.google.cloud.monitoring.v3.MetricServiceClient;
 import com.google.monitoring.v3.CreateTimeSeriesRequest;
 import com.google.monitoring.v3.Point;
 import com.google.monitoring.v3.ProjectName;
 import com.google.monitoring.v3.TimeInterval;
 import com.google.monitoring.v3.TimeSeries;
 import com.google.monitoring.v3.TypedValue;
-import com.google.protobuf.util.Timestamps;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static java.lang.Boolean.*;
 
 @RestController
 public class MSController {
     private static final AtomicInteger requestCount = new AtomicInteger(0);
     private static long initialTime = System.currentTimeMillis();
 
+    private static final List<Long> serviceTimesList = new ArrayList<>();
     private static final Logger logger = LoggerFactory.getLogger(RestServiceApplication.class);
+
 
     @Value("${ms.stime}")
     private Double stime;
@@ -68,21 +52,31 @@ public class MSController {
     @RequestMapping(value = "/", method = RequestMethod.GET)
     @ResponseBody
     public ResObj msGet() throws IOException {
-        requestCount.addAndGet(1);
-        logger.info("New request arrived. (Total: {})", requestCount);
+        logger.info("New request arrived. (Total: {})", requestCount.addAndGet(1));
         long timeLapse = System.currentTimeMillis() - initialTime;
+
+        long serviceTime = this.doWork();
+        serviceTimesList.add(serviceTime);
+
+
         if (timeLapse > 5000) { // More than 5 seconds passed since the counter was reset
             // Calculate rps
             double rps = (double) requestCount.get() * 1000 / timeLapse;
             logger.info("rps = {}", rps);
-            writeCustomMetric("my-microservice-test-project", "rps_gauge", rps);
-
-            // Reset values
+            writeCustomMetric( "rps_gauge", rps);
             initialTime = System.currentTimeMillis();
             requestCount.set(0);
+
+            // Calculate average service time
+            double averageServiceTime = serviceTimesList.stream()
+                    .mapToLong(Long::longValue)
+                    .average()
+                    .orElse(Double.NaN);
+            logger.info("average service time = ¨{}", averageServiceTime);
+            writeCustomMetric("service_time", averageServiceTime);
+            serviceTimesList.clear();
         }
 
-        this.doWork();
         return new ResObj();
     }
 
@@ -91,7 +85,7 @@ public class MSController {
         return new ResObj();
     }
 
-    private void doWork() {
+    private long doWork() {
         if (this.dist == null) this.dist = new ExponentialDistribution(this.stime);
         if (this.mgm == null) this.mgm = ManagementFactory.getThreadMXBean();
 
@@ -99,9 +93,10 @@ public class MSController {
         long start = this.mgm.getCurrentThreadCpuTime();
         while ((this.mgm.getCurrentThreadCpuTime() - start) < delay) {
         }
+        return delay;
     }
 
-    private void writeCustomMetric(String projectId, String metricName, double metricValue) throws IOException {
+    private void writeCustomMetric(String metricName, double metricValue) throws IOException {
         // Instantiates a client
         MetricServiceClient metricServiceClient = MetricServiceClient.create();
 
@@ -113,20 +108,18 @@ public class MSController {
         List<Point> pointList = new ArrayList<>();
         pointList.add(point);
 
-        ProjectName name = ProjectName.of(projectId);
+        ProjectName name = ProjectName.of(Project.getProjectId());
 
         // Prepares the metric descriptor
         Map<String, String> metricLabels = new HashMap<>();
-        metricLabels.put("service", "tier2");
+        metricLabels.put("service", Project.getServiceName());
         Metric metric = Metric.newBuilder().setType("custom.googleapis.com/" + metricName).
                 putAllLabels(metricLabels).build();
 
 
         // Prepares the monitored resource descriptor
         Map<String, String> resourceLabels = new HashMap<>();
-        resourceLabels.put("project_id", projectId);
-//                resourceLabels.put("instance_id", "gke-cluster-1-default-pool-932ec523-hn2h");
-//                resourceLabels.put("zone", "northamerica-northeast1-a");
+        resourceLabels.put("project_id", Project.getProjectId());
         MonitoredResource resource = MonitoredResource.newBuilder().setType("global").putAllLabels(resourceLabels).build();
 
         // Prepares the time series request
