@@ -111,8 +111,9 @@ public class MSController {
 
                 // Prepares the monitored resource descriptor
                 Map<String, String> resourceLabels = new HashMap<>();
-                resourceLabels.put("instance_id", "gke-cluster-1-default-pool-932ec523-hn2h");
-                resourceLabels.put("zone", "northamerica-northeast1-a");
+                resourceLabels.put("project_id", projectId);
+//                resourceLabels.put("instance_id", "gke-cluster-1-default-pool-932ec523-hn2h");
+//                resourceLabels.put("zone", "northamerica-northeast1-a");
                 MonitoredResource resource =
                         MonitoredResource.newBuilder().setType("global").putAllLabels(resourceLabels).build();
 
