@@ -59,8 +59,10 @@ public class MSController {
         if (Project.getServiceName().equals("tier1")) {
             String requestedURL = "http://spring-test-app-tier2:80/";
             HttpResponse<JsonNode> resp = Unirest.get(URI.create(requestedURL).toString()).asJson();
+        } else if (Project.getServiceName().equals("tier2")) {
+            String requestedURL = "http://spring-test-app-tier3:80/";
+            HttpResponse<JsonNode> resp = Unirest.get(URI.create(requestedURL).toString()).asJson();
         }
-
         long startTime = System.nanoTime();
         this.doWork();
         long elapsedTimeInMillis = (System.nanoTime() - startTime) / 1_000_000;
