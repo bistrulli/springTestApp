@@ -55,9 +55,10 @@ public class MSController {
         logger.info("New request arrived. (Total: {})", requestCount.addAndGet(1));
         long timeLapse = System.currentTimeMillis() - initialTime;
 
-        long serviceTime = this.doWork();
-        serviceTimesList.add(serviceTime);
-
+        long startTime = System.nanoTime();
+        this.doWork();
+        long elapsedTimeInMillis = (System.nanoTime() - startTime) / 1_000_000;
+        serviceTimesList.add(elapsedTimeInMillis);
 
         if (timeLapse > 5000) { // More than 5 seconds passed since the counter was reset
             // Calculate rps
@@ -72,7 +73,7 @@ public class MSController {
                     .mapToLong(Long::longValue)
                     .average()
                     .orElse(Double.NaN);
-            logger.info("average service time = ¨{}", averageServiceTime);
+            logger.info("average service time = {}ms", averageServiceTime);
             writeCustomMetric("service_time", averageServiceTime);
             serviceTimesList.clear();
         }
@@ -85,7 +86,7 @@ public class MSController {
         return new ResObj();
     }
 
-    private long doWork() {
+    private void doWork() {
         if (this.dist == null) this.dist = new ExponentialDistribution(this.stime);
         if (this.mgm == null) this.mgm = ManagementFactory.getThreadMXBean();
 
@@ -93,7 +94,6 @@ public class MSController {
         long start = this.mgm.getCurrentThreadCpuTime();
         while ((this.mgm.getCurrentThreadCpuTime() - start) < delay) {
         }
-        return delay;
     }
 
     private void writeCustomMetric(String metricName, double metricValue) throws IOException {
