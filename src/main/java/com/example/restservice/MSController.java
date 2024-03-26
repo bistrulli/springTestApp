@@ -56,13 +56,14 @@ public class MSController {
         logger.info("New request arrived. (Total: {})", requestCount.addAndGet(1));
         long timeLapse = System.currentTimeMillis() - initialTime;
 
-        if (Project.getServiceName().equals("tier1")) {
-            String requestedURL = "http://spring-test-app-tier2:80/";
-            HttpResponse<JsonNode> resp = Unirest.get(URI.create(requestedURL).toString()).asJson();
-        } else if (Project.getServiceName().equals("tier2")) {
-            String requestedURL = "http://spring-test-app-tier3:80/";
+        int n = Project.getTierNumber();
+
+        if (n != Project.getTotalTiers()) { // Any non-final tier
+            // Send a request to the next tier
+            String requestedURL = "http://spring-test-app-tier" + (n + 1) + ":80/";
             HttpResponse<JsonNode> resp = Unirest.get(URI.create(requestedURL).toString()).asJson();
         }
+
         long startTime = System.nanoTime();
         this.doWork();
         long elapsedTimeInMillis = (System.nanoTime() - startTime) / 1_000_000;
@@ -120,7 +121,8 @@ public class MSController {
 
         // Prepares the metric descriptor
         Map<String, String> metricLabels = new HashMap<>();
-        metricLabels.put("service", Project.getServiceName());
+        String serviceName = "tier" + Project.getTierNumber();
+        metricLabels.put("service", serviceName);
         Metric metric = Metric.newBuilder().setType("custom.googleapis.com/" + metricName).
                 putAllLabels(metricLabels).build();
 
