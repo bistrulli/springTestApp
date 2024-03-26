@@ -5,7 +5,7 @@ public class Project {
 
     private static final int totalTiers = 3;
 
-    private static final int tierNumber = 3;
+    private static final int tierNumber = 2;
 
     public static String getProjectId() {
         return projectId;
