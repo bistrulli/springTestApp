@@ -61,6 +61,7 @@ public class MSController {
         if (n != Project.getTotalTiers()) { // Any non-final tier
             // Send a request to the next tier
             String requestedURL = "http://spring-test-app-tier" + (n + 1) + ":80/";
+            logger.info("Sending message to: " + requestedURL);
             HttpResponse<JsonNode> resp = Unirest.get(URI.create(requestedURL).toString()).asJson();
         }
 
