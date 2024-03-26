@@ -37,7 +37,7 @@ public class MSController {
     private static final AtomicInteger requestCount = new AtomicInteger(0);
     private static long initialTime = System.currentTimeMillis();
 
-    private static final List<Long> serviceTimesList = new ArrayList<>();
+    private static final List<Long> responseTimesList = new ArrayList<>();
     private static final Logger logger = LoggerFactory.getLogger(RestServiceApplication.class);
 
 
@@ -53,6 +53,8 @@ public class MSController {
     @RequestMapping(value = "/", method = RequestMethod.GET)
     @ResponseBody
     public ResObj msGet() throws IOException {
+        long startTime = System.nanoTime();
+
         logger.info("New request arrived. (Total: {})", requestCount.addAndGet(1));
         long timeLapse = System.currentTimeMillis() - initialTime;
 
@@ -65,10 +67,9 @@ public class MSController {
             HttpResponse<JsonNode> resp = Unirest.get(URI.create(requestedURL).toString()).asJson();
         }
 
-        long startTime = System.nanoTime();
         this.doWork();
         long elapsedTimeInMillis = (System.nanoTime() - startTime) / 1_000_000;
-        serviceTimesList.add(elapsedTimeInMillis);
+        responseTimesList.add(elapsedTimeInMillis);
 
         if (timeLapse > 5000) { // More than 5 seconds passed since the counter was reset
             // Calculate rps
@@ -79,13 +80,13 @@ public class MSController {
             requestCount.set(0);
 
             // Calculate average service time
-            double averageServiceTime = serviceTimesList.stream()
+            double averageResponseTime = responseTimesList.stream()
                     .mapToLong(Long::longValue)
                     .average()
                     .orElse(Double.NaN);
-            logger.info("average service time = {}ms", averageServiceTime);
-            writeCustomMetric("service_time", averageServiceTime);
-            serviceTimesList.clear();
+            logger.info("average response time = {}ms", averageResponseTime);
+            writeCustomMetric("response_time", averageResponseTime);
+            responseTimesList.clear();
         }
 
         return new ResObj();
