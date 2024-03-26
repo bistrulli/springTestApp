@@ -85,7 +85,7 @@ public class MSController {
                     .average()
                     .orElse(Double.NaN);
             logger.info("average response time = {}ms", averageResponseTime);
-            writeCustomMetric("response_time", averageResponseTime);
+            writeCustomMetric("service_time", averageResponseTime);
             responseTimesList.clear();
         }
 
