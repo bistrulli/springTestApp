@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: spring-test-app-tier3
+  labels:
+    app: spring-test-app
+spec:
+  selector:
+    app: spring-test-app
+    tier: tier3
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+  type: LoadBalancer
+

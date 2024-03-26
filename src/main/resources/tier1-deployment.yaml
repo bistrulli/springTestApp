@@ -1,0 +1,33 @@
+apiVersion: apps/v1 # API version, v1 is stable for deployments
+kind: Deployment    # To allow creation of pods
+metadata:
+  name: spring-test-app-tier1
+spec:
+  replicas: 1 # Number of pods to run
+  selector:
+    matchLabels:
+      app: spring-test-app
+      tier: tier1
+  template:
+    metadata:
+      labels:
+        app: spring-test-app
+        tier: tier1
+    spec:
+      containers:
+      - name: spring-test-app-tier1-container
+        image: rpizziol/spring-test-app-tier1:0.12
+        imagePullPolicy: Always
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "2000m" # Recommended to use the m notation
+          limits:
+            memory: "1Gi"
+            cpu: "2000m"
+        ports:
+        - containerPort: 80
+#        env:
+#          - name: TIER_2_SERVICE_URL
+#            value: "http://spring-test-app-tier2:80"
+
