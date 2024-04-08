@@ -30,6 +30,7 @@ import com.google.monitoring.v3.ProjectName;
 import com.google.monitoring.v3.TimeInterval;
 import com.google.monitoring.v3.TimeSeries;
 import com.google.monitoring.v3.TypedValue;
+
 import java.util.concurrent.atomic.AtomicInteger;
 
 @RestController
@@ -75,7 +76,7 @@ public class MSController {
             // Calculate rps
             double rps = (double) requestCount.get() * 1000 / timeLapse;
             logger.info("rps = {}", rps);
-            writeCustomMetric( "rps_gauge", rps);
+            writeCustomMetric("rps_gauge", rps);
             initialTime = System.currentTimeMillis();
             requestCount.set(0);
 
@@ -107,47 +108,108 @@ public class MSController {
         }
     }
 
+//    private void writeCustomMetric(String metricName, double metricValue) throws IOException {
+//        // Instantiates a client
+//        MetricServiceClient metricServiceClient = MetricServiceClient.create();
+//
+//        // Prepares an individual data point
+//        long nowMillis = System.currentTimeMillis();
+//        TimeInterval interval = TimeInterval.newBuilder()
+//                .setEndTime(Timestamps.fromMillis(nowMillis))
+//                .setStartTime(Timestamps.fromMillis(nowMillis)) // Set startTime for clarity, even if the same as endTime
+//                .build();
+//        TypedValue value = TypedValue.newBuilder().setDoubleValue(metricValue).build();
+//        Point point = Point.newBuilder().setInterval(interval).setValue(value).build();
+//
+//        List<Point> pointList = new ArrayList<>();
+//        pointList.add(point);
+//
+//        ProjectName name = ProjectName.of(Project.getProjectId());
+//
+//        // Prepares the metric descriptor
+//        Map<String, String> metricLabels = new HashMap<>();
+//        String serviceName = "tier" + Project.getTierNumber();
+//        metricLabels.put("service", serviceName);
+//        Metric metric = Metric.newBuilder().setType("custom.googleapis.com/" + metricName).
+//                putAllLabels(metricLabels).build();
+//
+//
+//        // Prepares the monitored resource descriptor
+//        Map<String, String> resourceLabels = new HashMap<>();
+//        resourceLabels.put("project_id", Project.getProjectId());
+//        MonitoredResource resource = MonitoredResource.newBuilder().setType("global")
+//                .putAllLabels(resourceLabels).build();
+//
+//        // Prepares the time series request
+//        TimeSeries timeSeries = TimeSeries.newBuilder().setMetric(metric)
+//                .setResource(resource).addAllPoints(pointList).build();
+//
+//        List<TimeSeries> timeSeriesList = new ArrayList<>();
+//        timeSeriesList.add(timeSeries);
+//
+//        CreateTimeSeriesRequest request = CreateTimeSeriesRequest.newBuilder()
+//                .setName(name.toString())
+//                .addAllTimeSeries(timeSeriesList)
+//                .build();
+//
+//        // Writes time series data
+//        metricServiceClient.createTimeSeries(request);
+//
+//        logger.info("Done writing time series data.");
+//
+//        metricServiceClient.close();
+//
+//    }
+
+
     private void writeCustomMetric(String metricName, double metricValue) throws IOException {
         // Instantiates a client
-        MetricServiceClient metricServiceClient = MetricServiceClient.create();
+        try (MetricServiceClient metricServiceClient = MetricServiceClient.create()) {
 
-        // Prepares an individual data point
-        TimeInterval interval = TimeInterval.newBuilder().setEndTime(Timestamps.fromMillis(System.currentTimeMillis())).build();
-        TypedValue value = TypedValue.newBuilder().setDoubleValue(metricValue).build();
-        Point point = Point.newBuilder().setInterval(interval).setValue(value).build();
+            // Prepares an individual data point
+            long nowMillis = System.currentTimeMillis();
+            TimeInterval interval = TimeInterval.newBuilder()
+                    .setEndTime(Timestamps.fromMillis(nowMillis))
+                    .setStartTime(Timestamps.fromMillis(nowMillis)) // Set startTime for clarity, even if the same as endTime
+                    .build();
+            TypedValue value = TypedValue.newBuilder().setDoubleValue(metricValue).build();
+            Point point = Point.newBuilder().setInterval(interval).setValue(value).build();
 
-        List<Point> pointList = new ArrayList<>();
-        pointList.add(point);
+            List<Point> pointList = new ArrayList<>();
+            pointList.add(point);
 
-        ProjectName name = ProjectName.of(Project.getProjectId());
+            ProjectName name = ProjectName.of(Project.getProjectId());
 
-        // Prepares the metric descriptor
-        Map<String, String> metricLabels = new HashMap<>();
-        String serviceName = "tier" + Project.getTierNumber();
-        metricLabels.put("service", serviceName);
-        Metric metric = Metric.newBuilder().setType("custom.googleapis.com/" + metricName).
-                putAllLabels(metricLabels).build();
+            // Prepares the metric descriptor
+            Map<String, String> metricLabels = new HashMap<>();
+            String serviceName = "tier" + Project.getTierNumber();
+            metricLabels.put("service", serviceName);
+            Metric metric = Metric.newBuilder().setType("custom.googleapis.com/" + metricName)
+                    .putAllLabels(metricLabels).build();
 
+            // Prepares the monitored resource descriptor
+            Map<String, String> resourceLabels = new HashMap<>();
+            resourceLabels.put("project_id", Project.getProjectId());
+            MonitoredResource resource = MonitoredResource.newBuilder().setType("global")
+                    .putAllLabels(resourceLabels).build();
 
-        // Prepares the monitored resource descriptor
-        Map<String, String> resourceLabels = new HashMap<>();
-        resourceLabels.put("project_id", Project.getProjectId());
-        MonitoredResource resource = MonitoredResource.newBuilder().setType("global").putAllLabels(resourceLabels).build();
+            // Prepares the time series request
+            TimeSeries timeSeries = TimeSeries.newBuilder().setMetric(metric)
+                    .setResource(resource).addAllPoints(pointList).build();
 
-        // Prepares the time series request
-        TimeSeries timeSeries = TimeSeries.newBuilder().setMetric(metric).setResource(resource).addAllPoints(pointList).build();
-        List<TimeSeries> timeSeriesList = new ArrayList<>();
-        timeSeriesList.add(timeSeries);
+            CreateTimeSeriesRequest request = CreateTimeSeriesRequest.newBuilder()
+                    .setName(name.toString())
+                    .addAllTimeSeries(Collections.singletonList(timeSeries))
+                    .build();
 
-        CreateTimeSeriesRequest request = CreateTimeSeriesRequest.newBuilder().setName(name.toString()).addAllTimeSeries(timeSeriesList).build();
+            // Writes time series data
+            metricServiceClient.createTimeSeries(request);
 
-        // Writes time series data
-        metricServiceClient.createTimeSeries(request);
+            logger.info("Done writing time series data.");
 
-        logger.info("Done writing time series data.");
-
-        metricServiceClient.close();
-
+            // metricServiceClient.close(); // No need for this as there is "try"
+        }
     }
+
 
 }
