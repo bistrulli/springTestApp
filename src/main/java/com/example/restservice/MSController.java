@@ -31,15 +31,22 @@ import com.google.monitoring.v3.TimeInterval;
 import com.google.monitoring.v3.TimeSeries;
 import com.google.monitoring.v3.TypedValue;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @RestController
 public class MSController {
-    private static final AtomicInteger requestCount = new AtomicInteger(0);
-    private static long initialTime = System.currentTimeMillis();
+    public static final AtomicInteger requestCount = new AtomicInteger(0);
+    public static AtomicInteger requestCountM1 = new AtomicInteger(0); // Previous step req count
 
-    private static final List<Long> responseTimesList = new ArrayList<>();
+//    private static long initialTime = System.currentTimeMillis();
+
+    //    private static final List<Long> responseTimesList = new ArrayList<>();
     private static final Logger logger = LoggerFactory.getLogger(RestServiceApplication.class);
+
+    private MonitoringThread mnt = null;
 
 
     @Value("${ms.stime}")
@@ -51,13 +58,19 @@ public class MSController {
     private ExponentialDistribution dist = null;
     private ThreadMXBean mgm = null;
 
+    public MSController() {
+        mnt = new MonitoringThread();
+        ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+        executorService.scheduleAtFixedRate(mnt, 0, 30, TimeUnit.SECONDS);
+    }
+
     @RequestMapping(value = "/", method = RequestMethod.GET)
     @ResponseBody
     public ResObj msGet() throws IOException {
-        long startTime = System.nanoTime();
+//        long startTime = System.nanoTime();
 
         logger.info("New request arrived. (Total: {})", requestCount.addAndGet(1));
-        long timeLapse = System.currentTimeMillis() - initialTime;
+//        long timeLapse = System.currentTimeMillis() - initialTime;
 
         int n = Project.getTierNumber();
 
@@ -69,26 +82,26 @@ public class MSController {
         }
 
         this.doWork();
-        long elapsedTimeInMillis = (System.nanoTime() - startTime) / 1_000_000;
-        responseTimesList.add(elapsedTimeInMillis);
+//        long elapsedTimeInMillis = (System.nanoTime() - startTime) / 1_000_000;
+//        responseTimesList.add(elapsedTimeInMillis);
 
-        if (timeLapse > 5000) { // More than 5 seconds passed since the counter was reset
-            // Calculate rps
-            double rps = (double) requestCount.get() * 1000 / timeLapse;
-            logger.info("rps = {}", rps);
-            writeCustomMetric("rps_gauge", rps);
-            initialTime = System.currentTimeMillis();
-            requestCount.set(0);
-
-            // Calculate average service time
-            double averageResponseTime = responseTimesList.stream()
-                    .mapToLong(Long::longValue)
-                    .average()
-                    .orElse(Double.NaN);
-            logger.info("average response time = {}ms", averageResponseTime);
-            writeCustomMetric("service_time", averageResponseTime);
-            responseTimesList.clear();
-        }
+//        if (timeLapse > 5000) { // More than 5 seconds passed since the counter was reset
+//            // Calculate rps
+//            double rps = (double) requestCount.get() * 1000 / timeLapse;
+//            logger.info("rps = {}", rps);
+//            writeCustomMetric("rps_gauge", rps);
+//            initialTime = System.currentTimeMillis();
+//            requestCount.set(0);
+//
+        // Calculate average service time
+//            double averageResponseTime = responseTimesList.stream()
+//                    .mapToLong(Long::longValue)
+//                    .average()
+//                    .orElse(Double.NaN);
+//            logger.info("average response time = {}ms", averageResponseTime);
+//            writeCustomMetric("service_time", averageResponseTime);
+//            responseTimesList.clear();
+//        }
 
         return new ResObj();
     }
@@ -160,56 +173,5 @@ public class MSController {
 //        metricServiceClient.close();
 //
 //    }
-
-
-    private void writeCustomMetric(String metricName, double metricValue) throws IOException {
-        // Instantiates a client
-        try (MetricServiceClient metricServiceClient = MetricServiceClient.create()) {
-
-            // Prepares an individual data point
-            long nowMillis = System.currentTimeMillis();
-            TimeInterval interval = TimeInterval.newBuilder()
-                    .setEndTime(Timestamps.fromMillis(nowMillis))
-                    .setStartTime(Timestamps.fromMillis(nowMillis)) // Set startTime for clarity, even if the same as endTime
-                    .build();
-            TypedValue value = TypedValue.newBuilder().setDoubleValue(metricValue).build();
-            Point point = Point.newBuilder().setInterval(interval).setValue(value).build();
-
-            List<Point> pointList = new ArrayList<>();
-            pointList.add(point);
-
-            ProjectName name = ProjectName.of(Project.getProjectId());
-
-            // Prepares the metric descriptor
-            Map<String, String> metricLabels = new HashMap<>();
-            String serviceName = "tier" + Project.getTierNumber();
-            metricLabels.put("service", serviceName);
-            Metric metric = Metric.newBuilder().setType("custom.googleapis.com/" + metricName)
-                    .putAllLabels(metricLabels).build();
-
-            // Prepares the monitored resource descriptor
-            Map<String, String> resourceLabels = new HashMap<>();
-            resourceLabels.put("project_id", Project.getProjectId());
-            MonitoredResource resource = MonitoredResource.newBuilder().setType("global")
-                    .putAllLabels(resourceLabels).build();
-
-            // Prepares the time series request
-            TimeSeries timeSeries = TimeSeries.newBuilder().setMetric(metric)
-                    .setResource(resource).addAllPoints(pointList).build();
-
-            CreateTimeSeriesRequest request = CreateTimeSeriesRequest.newBuilder()
-                    .setName(name.toString())
-                    .addAllTimeSeries(Collections.singletonList(timeSeries))
-                    .build();
-
-            // Writes time series data
-            metricServiceClient.createTimeSeries(request);
-
-            logger.info("Done writing time series data.");
-
-            // metricServiceClient.close(); // No need for this as there is "try"
-        }
-    }
-
 
 }
