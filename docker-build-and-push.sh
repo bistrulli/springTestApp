@@ -1,6 +1,6 @@
 #!/bin/bash
 
-IMAGE_NAME="rpizziol/spring-test-app-tier3"
-TAG="0.11"
+IMAGE_NAME="rpizziol/spring-test-app-tier2"
+TAG="0.16"
 
 docker build --no-cache -t $IMAGE_NAME:$TAG . && docker push $IMAGE_NAME:$TAG
