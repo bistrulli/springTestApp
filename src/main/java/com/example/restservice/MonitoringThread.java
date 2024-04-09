@@ -25,6 +25,9 @@ public class MonitoringThread extends Thread {
         // Every 30 seconds send metrics
         super.run();
         double step = 30d; // Seconds
+        logger.info("requestCount = {}", MSController.requestCount.get());
+        logger.info("requestCountM1 = {}", MSController.requestCountM1.get());
+
         double rps = (double) (MSController.requestCount.get() - MSController.requestCountM1.get()) /step;
         MSController.requestCountM1 = MSController.requestCount;
         try {
