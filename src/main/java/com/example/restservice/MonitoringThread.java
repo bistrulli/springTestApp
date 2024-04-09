@@ -5,6 +5,8 @@ import com.google.api.MonitoredResource;
 import com.google.cloud.monitoring.v3.MetricServiceClient;
 import com.google.monitoring.v3.*;
 import com.google.protobuf.util.Timestamps;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
@@ -12,7 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class MonitoringThread extends Thread {
 
-    private static Long measurementTime = null;
+    private static final Logger logger = LoggerFactory.getLogger(RestServiceApplication.class);
 
     public MonitoringThread() {
 
@@ -76,7 +78,7 @@ public class MonitoringThread extends Thread {
             // Writes time series data
             metricServiceClient.createTimeSeries(request);
 
-            // logger.info("Done writing time series data.");
+            logger.info("Done writing time series data.");
 
             // metricServiceClient.close(); // No need for this as there is "try"
         }

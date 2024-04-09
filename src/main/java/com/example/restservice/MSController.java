@@ -41,9 +41,6 @@ public class MSController {
     public static final AtomicInteger requestCount = new AtomicInteger(0);
     public static AtomicInteger requestCountM1 = new AtomicInteger(0); // Previous step req count
 
-//    private static long initialTime = System.currentTimeMillis();
-
-    //    private static final List<Long> responseTimesList = new ArrayList<>();
     private static final Logger logger = LoggerFactory.getLogger(RestServiceApplication.class);
 
     private MonitoringThread mnt = null;
@@ -67,10 +64,8 @@ public class MSController {
     @RequestMapping(value = "/", method = RequestMethod.GET)
     @ResponseBody
     public ResObj msGet() throws IOException {
-//        long startTime = System.nanoTime();
 
         logger.info("New request arrived. (Total: {})", requestCount.addAndGet(1));
-//        long timeLapse = System.currentTimeMillis() - initialTime;
 
         int n = Project.getTierNumber();
 
@@ -82,27 +77,6 @@ public class MSController {
         }
 
         this.doWork();
-//        long elapsedTimeInMillis = (System.nanoTime() - startTime) / 1_000_000;
-//        responseTimesList.add(elapsedTimeInMillis);
-
-//        if (timeLapse > 5000) { // More than 5 seconds passed since the counter was reset
-//            // Calculate rps
-//            double rps = (double) requestCount.get() * 1000 / timeLapse;
-//            logger.info("rps = {}", rps);
-//            writeCustomMetric("rps_gauge", rps);
-//            initialTime = System.currentTimeMillis();
-//            requestCount.set(0);
-//
-        // Calculate average service time
-//            double averageResponseTime = responseTimesList.stream()
-//                    .mapToLong(Long::longValue)
-//                    .average()
-//                    .orElse(Double.NaN);
-//            logger.info("average response time = {}ms", averageResponseTime);
-//            writeCustomMetric("service_time", averageResponseTime);
-//            responseTimesList.clear();
-//        }
-
         return new ResObj();
     }
 
@@ -120,58 +94,5 @@ public class MSController {
         while ((this.mgm.getCurrentThreadCpuTime() - start) < delay) {
         }
     }
-
-//    private void writeCustomMetric(String metricName, double metricValue) throws IOException {
-//        // Instantiates a client
-//        MetricServiceClient metricServiceClient = MetricServiceClient.create();
-//
-//        // Prepares an individual data point
-//        long nowMillis = System.currentTimeMillis();
-//        TimeInterval interval = TimeInterval.newBuilder()
-//                .setEndTime(Timestamps.fromMillis(nowMillis))
-//                .setStartTime(Timestamps.fromMillis(nowMillis)) // Set startTime for clarity, even if the same as endTime
-//                .build();
-//        TypedValue value = TypedValue.newBuilder().setDoubleValue(metricValue).build();
-//        Point point = Point.newBuilder().setInterval(interval).setValue(value).build();
-//
-//        List<Point> pointList = new ArrayList<>();
-//        pointList.add(point);
-//
-//        ProjectName name = ProjectName.of(Project.getProjectId());
-//
-//        // Prepares the metric descriptor
-//        Map<String, String> metricLabels = new HashMap<>();
-//        String serviceName = "tier" + Project.getTierNumber();
-//        metricLabels.put("service", serviceName);
-//        Metric metric = Metric.newBuilder().setType("custom.googleapis.com/" + metricName).
-//                putAllLabels(metricLabels).build();
-//
-//
-//        // Prepares the monitored resource descriptor
-//        Map<String, String> resourceLabels = new HashMap<>();
-//        resourceLabels.put("project_id", Project.getProjectId());
-//        MonitoredResource resource = MonitoredResource.newBuilder().setType("global")
-//                .putAllLabels(resourceLabels).build();
-//
-//        // Prepares the time series request
-//        TimeSeries timeSeries = TimeSeries.newBuilder().setMetric(metric)
-//                .setResource(resource).addAllPoints(pointList).build();
-//
-//        List<TimeSeries> timeSeriesList = new ArrayList<>();
-//        timeSeriesList.add(timeSeries);
-//
-//        CreateTimeSeriesRequest request = CreateTimeSeriesRequest.newBuilder()
-//                .setName(name.toString())
-//                .addAllTimeSeries(timeSeriesList)
-//                .build();
-//
-//        // Writes time series data
-//        metricServiceClient.createTimeSeries(request);
-//
-//        logger.info("Done writing time series data.");
-//
-//        metricServiceClient.close();
-//
-//    }
 
 }
