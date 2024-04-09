@@ -29,7 +29,8 @@ public class MonitoringThread extends Thread {
         logger.info("requestCountM1 = {}", MSController.requestCountM1.get());
 
         double rps = (double) (MSController.requestCount.get() - MSController.requestCountM1.get()) /step;
-        MSController.requestCountM1 = MSController.requestCount;
+        // MSController.requestCountM1 = MSController.requestCount;
+        MSController.requestCountM1.set(MSController.requestCount.get());
         try {
             logger.info("rps = {}", rps);
             writeCustomMetric("rps_gauge" ,rps);
