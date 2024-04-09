@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: spring-test-app-tier1-container
-        image: rpizziol/spring-test-app-tier1:0.18
+        image: rpizziol/spring-test-app-tier1:0.19
         imagePullPolicy: Always
         resources:
           requests:
