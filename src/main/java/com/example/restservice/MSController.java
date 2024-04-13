@@ -40,8 +40,8 @@ public class MSController {
 
         // Nested request to tier2
         // String requestedURL = "http://%s:%d%s".formatted(new Object[]{"spring-test-app-tier2", 80, "/"});
-//        String requestedURL = "http://spring-test-app-tier2:80/";
-//        HttpResponse<JsonNode> resp = Unirest.get(URI.create(requestedURL).toString()).asJson();
+        String requestedURL = "http://spring-test-app-tier2:80/";
+        HttpResponse<JsonNode> resp = Unirest.get(URI.create(requestedURL).toString()).asJson();
 
         this.doWork();
         return new ResObj();
@@ -52,25 +52,25 @@ public class MSController {
         return new ResObj();
     }
     
-    private void doWork() {
-    	try {
-			TimeUnit.SECONDS.sleep(1);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-    }
-
 //    private void doWork() {
-//        if (this.dist == null)
-//            this.dist = new ExponentialDistribution(this.stime);
-//        if (this.mgm == null)
-//            this.mgm = ManagementFactory.getThreadMXBean();
-//
-//        long delay = Long.valueOf(Math.round(this.dist.sample() * 1e09));
-//        long start = this.mgm.getCurrentThreadCpuTime();
-//        while ((this.mgm.getCurrentThreadCpuTime() - start) < delay) {
-//        }
+//    	try {
+//			TimeUnit.SECONDS.sleep(1);
+//		} catch (InterruptedException e) {
+//			e.printStackTrace();
+//		}
 //    }
+
+    private void doWork() {
+        if (this.dist == null)
+            this.dist = new ExponentialDistribution(this.stime);
+        if (this.mgm == null)
+            this.mgm = ManagementFactory.getThreadMXBean();
+
+        long delay = Long.valueOf(Math.round(this.dist.sample() * 1e09));
+        long start = this.mgm.getCurrentThreadCpuTime();
+        while ((this.mgm.getCurrentThreadCpuTime() - start) < delay) {
+        }
+    }
     
 
 }
