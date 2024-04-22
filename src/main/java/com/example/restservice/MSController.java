@@ -4,12 +4,7 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.net.URI;
-import java.util.*;
 
-import com.google.api.Metric;
-import com.google.api.MonitoredResource;
-import com.google.cloud.monitoring.v3.MetricServiceClient;
-import com.google.protobuf.util.Timestamps;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.Unirest;
@@ -22,14 +17,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
-
-// Imports for the custom metrics
-import com.google.monitoring.v3.CreateTimeSeriesRequest;
-import com.google.monitoring.v3.Point;
-import com.google.monitoring.v3.ProjectName;
-import com.google.monitoring.v3.TimeInterval;
-import com.google.monitoring.v3.TimeSeries;
-import com.google.monitoring.v3.TypedValue;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -65,18 +52,20 @@ public class MSController {
     @ResponseBody
     public ResObj msGet() throws IOException {
 
+        long startTime = System.currentTimeMillis();
         logger.info("New request arrived. (Total: {})", requestCount.addAndGet(1));
 
         int n = Project.getTierNumber();
-
         if (n != Project.getTotalTiers()) { // Any non-final tier
             // Send a request to the next tier
             String requestedURL = "http://spring-test-app-tier" + (n + 1) + ":80/";
-            logger.info("Sending message to: " + requestedURL);
+            logger.info("Sending message to: {}", requestedURL);
             HttpResponse<JsonNode> resp = Unirest.get(URI.create(requestedURL).toString()).asJson();
         }
-
         this.doWork();
+        long endTime = System.currentTimeMillis();
+        long elapsedTime = endTime - startTime; // Elapsed time in milliseconds
+        logger.info("Elapsed time: {} ms", elapsedTime);
         return new ResObj();
     }
 
