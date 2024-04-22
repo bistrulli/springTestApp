@@ -69,9 +69,9 @@ public class MSController {
         this.doWork();
         long endTime = System.currentTimeMillis();
         long elapsedTime = endTime - startTime; // Elapsed time in milliseconds
-        logger.info("Elapsed time: {} ms", elapsedTime);
+        logger.info("Single request service time: {} ms", elapsedTime);
 
-        logger.info("Current serviceTimeSum = {}", serviceTimesSumM1.addAndGet(elapsedTime));
+        logger.info("Current serviceTimeSum: {} ms", serviceTimesSumM1.addAndGet(elapsedTime));
         return new ResObj();
     }
 

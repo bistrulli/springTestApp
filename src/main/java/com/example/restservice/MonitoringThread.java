@@ -25,11 +25,11 @@ public class MonitoringThread extends Thread {
         // Every 30 seconds send metrics
         super.run();
         double step = 30d; // Seconds
-        logger.info("requestCount = {}", MSController.requestCount.get());
-        logger.info("requestCountM1 = {}", MSController.requestCountM1.get());
+        logger.info("requestCount : {}", MSController.requestCount.get());
+        logger.info("requestCountM1 : {}", MSController.requestCountM1.get());
 
-        logger.info("serviceTimeSum = {}", MSController.serviceTimesSum.get());
-        logger.info("serviceTimeSumM1 = {}", MSController.serviceTimesSumM1.get());
+        logger.info("serviceTimeSum : {}", MSController.serviceTimesSum.get());
+        logger.info("serviceTimeSumM1 : {}", MSController.serviceTimesSumM1.get());
 
         double rps = (double) (MSController.requestCount.get() - MSController.requestCountM1.get()) / step;
         MSController.requestCountM1.set(MSController.requestCount.get());
@@ -38,10 +38,10 @@ public class MonitoringThread extends Thread {
         MSController.serviceTimesSumM1.set(MSController.serviceTimesSum.get());
 
         try {
-            logger.info("rps = {}", rps);
-            logger.info("avg_st = {}", avg_st);
+            logger.info("rps : {}", rps);
+            logger.info("avg_st : {}", avg_st);
             writeCustomMetric("rps_gauge", rps);
-            writeCustomMetric("st_gauge", avg_st);
+//            writeCustomMetric("st_gauge", avg_st);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
