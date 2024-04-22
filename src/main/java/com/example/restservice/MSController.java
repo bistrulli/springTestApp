@@ -22,11 +22,15 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 @RestController
 public class MSController {
     public static final AtomicInteger requestCount = new AtomicInteger(0);
     public static AtomicInteger requestCountM1 = new AtomicInteger(0); // Previous step req count
+
+    public static final AtomicLong serviceTimesSum = new AtomicLong(0);
+    public static AtomicLong serviceTimesSumM1 = new AtomicLong(0);
 
     private static final Logger logger = LoggerFactory.getLogger(RestServiceApplication.class);
 
@@ -66,6 +70,8 @@ public class MSController {
         long endTime = System.currentTimeMillis();
         long elapsedTime = endTime - startTime; // Elapsed time in milliseconds
         logger.info("Elapsed time: {} ms", elapsedTime);
+
+        logger.info("Current serviceTimeSum = {}", serviceTimesSumM1.addAndGet(elapsedTime));
         return new ResObj();
     }
 
