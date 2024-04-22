@@ -28,12 +28,12 @@ public class MonitoringThread extends Thread {
         logger.info("requestCount = {}", MSController.requestCount.get());
         logger.info("requestCountM1 = {}", MSController.requestCountM1.get());
 
-        double rps = (double) (MSController.requestCount.get() - MSController.requestCountM1.get()) /step;
+        double rps = (double) (MSController.requestCount.get() - MSController.requestCountM1.get()) / step;
         // MSController.requestCountM1 = MSController.requestCount;
         MSController.requestCountM1.set(MSController.requestCount.get());
         try {
             logger.info("rps = {}", rps);
-            writeCustomMetric("rps_gauge" ,rps);
+            writeCustomMetric("rps_gauge", rps);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -58,22 +58,35 @@ public class MonitoringThread extends Thread {
 
             ProjectName name = ProjectName.of(Project.getProjectId());
 
+            // Fetch pod name from environment variable
+            String podName = System.getenv("POD_NAME"); // Assumes POD_NAME is set via Kubernetes Downward API
+
+            logger.info("POD_NAME = {}", podName);
+
             // Prepares the metric descriptor
             Map<String, String> metricLabels = new HashMap<>();
             String serviceName = "tier" + Project.getTierNumber();
             metricLabels.put("service", serviceName);
-            Metric metric = Metric.newBuilder().setType("custom.googleapis.com/" + metricName)
-                    .putAllLabels(metricLabels).build();
+            metricLabels.put("pod_name", podName);
+            Metric metric = Metric.newBuilder()
+                    .setType("custom.googleapis.com/" + metricName)
+                    .putAllLabels(metricLabels)
+                    .build();
 
             // Prepares the monitored resource descriptor
             Map<String, String> resourceLabels = new HashMap<>();
             resourceLabels.put("project_id", Project.getProjectId());
-            MonitoredResource resource = MonitoredResource.newBuilder().setType("global")
-                    .putAllLabels(resourceLabels).build();
+            MonitoredResource resource = MonitoredResource.newBuilder()
+                    .setType("global")
+                    .putAllLabels(resourceLabels)
+                    .build();
 
             // Prepares the time series request
-            TimeSeries timeSeries = TimeSeries.newBuilder().setMetric(metric)
-                    .setResource(resource).addAllPoints(pointList).build();
+            TimeSeries timeSeries = TimeSeries.newBuilder()
+                    .setMetric(metric)
+                    .setResource(resource)
+                    .addAllPoints(pointList)
+                    .build();
 
             CreateTimeSeriesRequest request = CreateTimeSeriesRequest.newBuilder()
                     .setName(name.toString())
@@ -84,8 +97,6 @@ public class MonitoringThread extends Thread {
             metricServiceClient.createTimeSeries(request);
 
             logger.info("Done writing time series data.");
-
-            // metricServiceClient.close(); // No need for this as there is "try"
         }
     }
 }

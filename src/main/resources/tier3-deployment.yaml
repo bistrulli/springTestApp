@@ -15,16 +15,20 @@ spec:
         tier: tier3
     spec:
       containers:
-      - name: spring-test-app-tier3-container
-        image: rpizziol/spring-test-app-tier3:0.11
-        imagePullPolicy: Always
-        resources:
-          requests:
-            memory: "512Mi"
-            cpu: "2000m" # Recommended to use the m notation
-          limits:
-            memory: "1Gi"
-            cpu: "2000m"
-        ports:
-        - containerPort: 80
-
+        - name: spring-test-app-tier3-container
+          image: rpizziol/spring-test-app-tier3:0.12
+          imagePullPolicy: Always
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "1000m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+          ports:
+            - containerPort: 80
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name

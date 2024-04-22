@@ -20,11 +20,11 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            memory: "512Mi"
-            cpu: "2000m" # Recommended to use the m notation
+            memory: "1Gi"
+            cpu: "1000m" # Recommended to use the m notation
           limits:
             memory: "1Gi"
-            cpu: "2000m"
+            cpu: "1000m"
         ports:
         - containerPort: 80
 
