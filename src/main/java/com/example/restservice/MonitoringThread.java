@@ -29,7 +29,6 @@ public class MonitoringThread extends Thread {
         logger.info("requestCountM1 = {}", MSController.requestCountM1.get());
 
         double rps = (double) (MSController.requestCount.get() - MSController.requestCountM1.get()) / step;
-        // MSController.requestCountM1 = MSController.requestCount;
         MSController.requestCountM1.set(MSController.requestCount.get());
         try {
             logger.info("rps = {}", rps);
@@ -65,9 +64,9 @@ public class MonitoringThread extends Thread {
 
             // Prepares the metric descriptor
             Map<String, String> metricLabels = new HashMap<>();
-            String serviceName = "tier" + Project.getTierNumber();
-            metricLabels.put("service", serviceName);
-            metricLabels.put("pod_name", podName);
+//            String serviceName = "tier" + Project.getTierNumber();
+            metricLabels.put("service", podName); // serviceName);
+//            metricLabels.put("pod_name", podName);
             Metric metric = Metric.newBuilder()
                     .setType("custom.googleapis.com/" + metricName)
                     .putAllLabels(metricLabels)
