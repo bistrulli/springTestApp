@@ -26,10 +26,10 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @RestController
 public class MSController {
-    public static final AtomicInteger requestCount = new AtomicInteger(0);
+    public static AtomicInteger requestCount = new AtomicInteger(0);
     public static AtomicInteger requestCountM1 = new AtomicInteger(0); // Previous step req count
 
-    public static final AtomicLong serviceTimesSum = new AtomicLong(0);
+    public static AtomicLong serviceTimesSum = new AtomicLong(0);
     public static AtomicLong serviceTimesSumM1 = new AtomicLong(0);
 
     private static final Logger logger = LoggerFactory.getLogger(RestServiceApplication.class);
@@ -56,7 +56,7 @@ public class MSController {
     @ResponseBody
     public ResObj msGet() throws IOException {
 
-        long startTime = System.currentTimeMillis();
+        long startTime = System.currentTimeMillis(); // TODO nanotime
         logger.info("New request arrived. (Total: {})", requestCount.addAndGet(1));
 
         int n = Project.getTierNumber();
@@ -71,7 +71,7 @@ public class MSController {
         long elapsedTime = endTime - startTime; // Elapsed time in milliseconds
         logger.info("Single request service time: {} ms", elapsedTime);
 
-        logger.info("Current serviceTimeSum: {} ms", serviceTimesSumM1.addAndGet(elapsedTime));
+        logger.info("Current serviceTimeSum: {} ms", serviceTimesSum.addAndGet(elapsedTime));
         return new ResObj();
     }
 

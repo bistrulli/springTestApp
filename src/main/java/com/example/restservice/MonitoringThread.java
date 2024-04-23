@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class MonitoringThread extends Thread {
 
@@ -28,20 +27,19 @@ public class MonitoringThread extends Thread {
         logger.info("requestCount : {}", MSController.requestCount.get());
         logger.info("requestCountM1 : {}", MSController.requestCountM1.get());
 
-//        logger.info("serviceTimeSum : {}", MSController.serviceTimesSum.get());
-//        logger.info("serviceTimeSumM1 : {}", MSController.serviceTimesSumM1.get());
-
-        double rps = (double) (MSController.requestCount.get() - MSController.requestCountM1.get()) / step;
-        MSController.requestCountM1.set(MSController.requestCount.get());
-
-//        double avg_st = (double) (MSController.serviceTimesSum.get() - MSController.serviceTimesSumM1.get()) / (MSController.requestCount.get() - MSController.requestCountM1.get());
-//        MSController.serviceTimesSumM1.set(MSController.serviceTimesSum.get());
-
+        logger.info("serviceTimeSum : {}", MSController.serviceTimesSum.get());
+        logger.info("serviceTimeSumM1 : {}", MSController.serviceTimesSumM1.get());
         try {
+            double rps = (double) (MSController.requestCount.get() - MSController.requestCountM1.get()) / step;
+            double avg_st = (double) (MSController.serviceTimesSum.get() - MSController.serviceTimesSumM1.get()) / (MSController.requestCount.get() - MSController.requestCountM1.get());
+
+            MSController.requestCountM1.set(MSController.requestCount.get());
+            MSController.serviceTimesSumM1.set(MSController.serviceTimesSum.get());
+
             logger.info("rps : {}", rps);
-//            logger.info("avg_st : {}", avg_st);
+            logger.info("avg_st : {}", avg_st);
             writeCustomMetric("rps_gauge", rps);
-//            writeCustomMetric("st_gauge", avg_st);
+            writeCustomMetric("st_gauge", avg_st);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
