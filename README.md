@@ -18,4 +18,9 @@ Changing the `ms.stime` to `0.05` in the following versions:
 - Tier 2: 0.24
 - Tier 3: 0.24
 
+HTTP readiness probe in the following versions:
+- Tier 1: 0.25
+- Tier 2: 0.25
+- Tier 3: 0.25
+
 Notice that for Tiers 2 and 3, versions 0.20-0.23 do not exist.

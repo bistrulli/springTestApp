@@ -52,6 +52,13 @@ public class MSController {
         executorService.scheduleAtFixedRate(mnt, 0, 30, TimeUnit.SECONDS);
     }
 
+    @RequestMapping(value = "/ping", method = RequestMethod.GET)
+    @ResponseBody
+    public String ping() {
+        return "Pong";
+    }
+
+
     @RequestMapping(value = "/", method = RequestMethod.GET)
     @ResponseBody
     public ResObj msGet() throws IOException {
