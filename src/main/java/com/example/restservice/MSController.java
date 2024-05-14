@@ -13,10 +13,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -28,6 +30,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class MSController {
     public static AtomicInteger requestCount = new AtomicInteger(0);
     public static AtomicInteger requestCountM1 = new AtomicInteger(0); // Previous step req count
+    public static AtomicInteger activeRequests = new AtomicInteger(0); // Previous step req count
 
     public static AtomicLong serviceTimesSum = new AtomicLong(0);
     public static AtomicLong serviceTimesSumM1 = new AtomicLong(0);
@@ -62,6 +65,7 @@ public class MSController {
     @RequestMapping(value = "/", method = RequestMethod.GET)
     @ResponseBody
     public ResObj msGet() throws IOException {
+        activeRequests.incrementAndGet();
 
         long startTime = System.currentTimeMillis(); // TODO nanotime
         logger.info("New request arrived. (Total: {})", requestCount.addAndGet(1));
@@ -79,6 +83,7 @@ public class MSController {
         logger.info("Single request service time: {} ms", elapsedTime);
 
         logger.info("Current serviceTimeSum: {} ms", serviceTimesSum.addAndGet(elapsedTime));
+        activeRequests.decrementAndGet();
         return new ResObj();
     }
 
@@ -96,5 +101,21 @@ public class MSController {
         while ((this.mgm.getCurrentThreadCpuTime() - start) < delay) {
         }
     }
+
+    @PostMapping("/preStop")
+    public ResObj preStop() {
+        logger.info("Inside preStop.");
+
+        // Wait for completion
+        while (activeRequests.get() > 0) {
+            try {
+                TimeUnit.MILLISECONDS.sleep(100);
+            } catch (InterruptedException e) {
+                // Handle interruption (optional)
+            }
+        }
+        return new ResObj();
+    }
+
 
 }
