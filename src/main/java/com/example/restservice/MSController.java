@@ -11,6 +11,7 @@ import kong.unirest.Unirest;
 import org.apache.commons.math3.distribution.ExponentialDistribution;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -39,7 +40,6 @@ public class MSController {
 
     private MonitoringThread mnt = null;
 
-
     @Value("${ms.stime}")
     private Double stime;
 
@@ -55,7 +55,7 @@ public class MSController {
         executorService.scheduleAtFixedRate(mnt, 0, 30, TimeUnit.SECONDS);
     }
 
-    @RequestMapping(value = "/ping", method = RequestMethod.GET)
+    @RequestMapping(value = "/health", method = RequestMethod.GET)
     @ResponseBody
     public String ping() {
         return "Pong";
@@ -87,10 +87,6 @@ public class MSController {
         return new ResObj();
     }
 
-    @GetMapping("/mnt")
-    public ResObj mnt() {
-        return new ResObj();
-    }
 
     private void doWork() {
         if (this.dist == null) this.dist = new ExponentialDistribution(this.stime);
@@ -102,20 +98,20 @@ public class MSController {
         }
     }
 
-    @PostMapping("/preStop")
-    public ResObj preStop() {
-        logger.info("Inside preStop.");
-
-        // Wait for completion
-        while (activeRequests.get() > 0) {
-            try {
-                TimeUnit.MILLISECONDS.sleep(100);
-            } catch (InterruptedException e) {
-                // Handle interruption (optional)
-            }
-        }
-        return new ResObj();
-    }
+//    @PostMapping("/preStop")
+//    public ResObj preStop() {
+//        logger.info("Inside preStop.");
+//
+//        // Wait for completion
+//        while (activeRequests.get() > 0) {
+//            try {
+//                TimeUnit.MILLISECONDS.sleep(100);
+//            } catch (InterruptedException e) {
+//                // Handle interruption (optional)
+//            }
+//        }
+//        return new ResObj();
+//    }
 
 
 }
