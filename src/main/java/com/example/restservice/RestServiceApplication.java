@@ -16,7 +16,9 @@ public class RestServiceApplication implements ApplicationRunner {
     private static final Logger logger = LoggerFactory.getLogger(RestServiceApplication.class);
 
     public static void main(String[] args) throws Exception {
-
+    	
+    	System.gc();
+    	
         Unirest.config().concurrency(20000, 20000);
         Unirest.config().automaticRetries(false);
         Unirest.config().cacheResponses(false);
