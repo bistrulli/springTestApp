@@ -1,11 +1,12 @@
-FROM ubuntu:22.04
+FROM amd64/ubuntu:22.04
 
 RUN apt-get update -y
 RUN apt-get install openssh-server git openjdk-17-jdk maven redis curl iputils-ping -y
 
 WORKDIR /root
-RUN git clone https://github.com/bistrulli/springTestApp.git
+#COPY git clone https://github.com/bistrulli/springTestApp.git
+COPY . /root/springTestApp
 WORKDIR /root/springTestApp
 RUN mvn clean package
-EXPOSE 80
+EXPOSE 8080
 CMD ["java", "-jar", "/root/springTestApp/target/k8testpod-0.0.1.jar","--ms.stime=0.1"] 
