@@ -29,6 +29,7 @@ public class RestServiceApplication implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) throws Exception {
 
+        logger.info("Tier " + Project.getTierNumber());
         logger.info("Application started with command-line arguments: {}", Arrays.toString(args.getSourceArgs()));
         logger.info("NonOptionArgs: {}", args.getNonOptionArgs());
         logger.info("OptionNames: {}", args.getOptionNames());
