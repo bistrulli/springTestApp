@@ -17,9 +17,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.HtmlUtils;
 
+import com.github.lalyos.jfiglet.FigletFont;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -48,11 +51,12 @@ public class MSController {
 
     private ExponentialDistribution dist = null;
     private ThreadMXBean mgm = null;
+	private Runtime runtime;	
 
     public MSController() {
         mnt = new MonitoringThread();
-        ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-        executorService.scheduleAtFixedRate(mnt, 0, 30, TimeUnit.SECONDS);
+        //ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+        //executorService.scheduleAtFixedRate(mnt, 0, 30, TimeUnit.SECONDS);
     }
 
     @RequestMapping(value = "/health", method = RequestMethod.GET)
@@ -61,31 +65,31 @@ public class MSController {
         return "Pong";
     }
 
-
     @RequestMapping(value = "/", method = RequestMethod.GET)
     @ResponseBody
-
-    public ResObj msGet() throws IOException {
+    public String msGet(@RequestParam(value = "text", defaultValue = "Hello, World!") String text) throws IOException {
         activeRequests.incrementAndGet();
 
         long startTime = System.currentTimeMillis(); // TODO nanotime
         logger.info("New request arrived. (Total: {})", requestCount.addAndGet(1));
 
-        int n = Project.getTierNumber();
-        if (n != Project.getTotalTiers()) { // Any non-final tier
-            // Send a request to the next tier
-            String requestedURL = "http://spring-test-app-tier" + (n + 1) + ":80/";
-            logger.info("Sending message to: {}", requestedURL);
-            HttpResponse<JsonNode> resp = Unirest.get(URI.create(requestedURL).toString()).asJson();
-        }
-        this.doWork();
+//        int n = Project.getTierNumber();
+//        if (n != Project.getTotalTiers()) { // Any non-final tier
+//            // Send a request to the next tier
+//            String requestedURL = "http://spring-test-app-tier" + (n + 1) + ":80/";
+//            logger.info("Sending message to: {}", requestedURL);
+//            HttpResponse<JsonNode> resp = Unirest.get(URI.create(requestedURL).toString()).asJson();
+//        }
+        //this.doWork();
+        
         long endTime = System.currentTimeMillis();
         long elapsedTime = endTime - startTime; // Elapsed time in milliseconds
         logger.info("Single request service time: {} ms", elapsedTime);
 
         logger.info("Current serviceTimeSum: {} ms", serviceTimesSum.addAndGet(elapsedTime));
         activeRequests.decrementAndGet();
-        return new ResObj();
+        
+        return "<pre>" + FigletFont.convertOneLine(text) + "</pre>";
     }
 
 
@@ -97,6 +101,11 @@ public class MSController {
         long start = this.mgm.getCurrentThreadCpuTime();
         while ((this.mgm.getCurrentThreadCpuTime() - start) < delay) {
         }
+    }
+    
+    static String convertStreamToString(java.io.InputStream is) {
+        java.util.Scanner s = new java.util.Scanner(is).useDelimiter("\\A");
+        return s.hasNext() ? s.next() : "";
     }
 
 //    @PostMapping("/preStop")

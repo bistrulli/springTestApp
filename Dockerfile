@@ -8,4 +8,4 @@ COPY . /root/springTestApp
 WORKDIR /root/springTestApp
 RUN mvn clean package
 EXPOSE 8080
-CMD ["java", "-jar", "/root/springTestApp/target/k8testpod-0.0.1.jar","--ms.stime=0.1"] 
+CMD ["java", "-jar", "/root/springTestApp/target/fromShellToCloud-0.0.1.jar","--ms.stime=1.0"] 
