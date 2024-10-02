@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ascii-art-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ascii-art
+  template:
+    metadata:
+      labels:
+        app: ascii-art
+    spec:
+      containers:
+      - name: ascii-art-container
+        image: bistrulli/pyfstc:0.01
+        ports:
+        - containerPort: 8080
